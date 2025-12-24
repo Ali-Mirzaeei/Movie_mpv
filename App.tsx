@@ -7,16 +7,7 @@ import Button from './components/Button';
 import MovieCard from './components/MovieCard';
 import StarRating from './components/StarRating';
 import { submitVote } from "./api";
-
-export const submitVote = (payload: any) => {
-  return fetch(`${API_BASE}/api/submit/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-};
+import { API_BASE } from "./config";
 
 const TOTAL_SELECTIONS_NEEDED = 10;
 
@@ -223,28 +214,23 @@ const App: React.FC = () => {
     }
   };
 
-
-
-
-const handleLeadGenSubmit = async (e: React.FormEvent) => {
+  const handleLeadGenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
       email,
       phone,
-      selected_movies: selectedMovies, // match your backend field names
+      selected_movies: selectedMovies,
       movie_ratings: movieRatings,
     };
 
-  import { API_BASE } from "./config";
-
-try {
-  const response = await fetch(`${API_BASE}/api/submit/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+    try {
+      const response = await fetch(`${API_BASE}/api/submit/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -262,60 +248,40 @@ try {
     }
   };
 
+  // تابع برای ثبت امتیازها
+  const handleSaveRatings = async () => {
+    const payload = {
+      email: '', // فعلا خالی
+      phone: '', // فعلا خالی
+      selected_movies: selectedMovies,
+      movie_ratings: movieRatings,
+      source: 'ratings_page' // برای تشخیص منبع ثبت
+    };
 
+    try {
+      const response = await fetch(`${API_BASE}/api/submit/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-
-  // تابع جدید برای ثبت امتیازها
-const handleSaveRatings = async () => {
-  const payload = {
-    email: '', // فعلا خالی
-    phone: '', // فعلا خالی
-    selected_movies: selectedMovies,
-    movie_ratings: movieRatings,
-    source: 'ratings_page' // برای تشخیص منبع ثبت
-  };
-
-  try {
-  const response = await fetch(`${API_BASE}/api/submit/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Rating submission error:", errorData);
-      // می‌توانید یک alert نشان دهید یا لاگ کنید
-    } else {
-      const data = await response.json();
-      console.log("Ratings saved successfully:", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Rating submission error:", errorData);
+        // می‌توانید یک alert نشان دهید یا لاگ کنید
+      } else {
+        const data = await response.json();
+        console.log("Ratings saved successfully:", data);
+      }
+    } catch (err) {
+      console.error("Network error while saving ratings:", err);
     }
-  } catch (err) {
-    console.error("Network error while saving ratings:", err);
-  }
-  
-  // در هر صورت به مرحله بعد برو
-  setStep(AppStep.LEAD_GEN);
-};
-
-// در بخش رندر صفحه RESULTS، دکمه "ادامه" را اصلاح کنید:
-{!loading && (
-  <div className="flex justify-center mb-12">
-    <Button 
-      onClick={() => {
-        // اول امتیازها را ذخیره کن، سپس به مرحله بعد برو
-        handleSaveRatings();
-      }} 
-      className="px-12"
-    >
-      ادامه
-    </Button>
-  </div>
-)}
- 
+    
+    // در هر صورت به مرحله بعد برو
+    setStep(AppStep.LEAD_GEN);
+  };
 
   const handleRatingChange = (movieTitle: string, rating: number) => {
     setMovieRatings(prev => ({
@@ -409,20 +375,20 @@ const handleSaveRatings = async () => {
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary tracking-tight">
             MovieMind
           </h1>
-      <p className="text-gray-300 text-lg md:text-xl leading-relaxed font-light">
-  <strong>با هم سلیقه‌ی فیلم‌ بازیت رو کشف می‌کنیم</strong> 🎬  
-  <br />
-  فقط <strong>چند دقیقه</strong> باهامون باش؛ 
-  <br /> 
-  بین هر دو فیلم <strong>✅ یکی رو انتخاب کن یا ردشون کن ❌</strong>                  
-  <br />
-  بعدش <strong>فیلم‌هایی بهت نشون می‌دیم که واقعاً بهت می‌چسبه</strong> 🔥  
-  <br />
-  چون هنوز کامل همو نمی‌شناسیم،  
-  ممکنه <strong>بعضی فیلم‌ها رو قبلاً دیده باشی</strong> اشکالی نداره 😉  
-  <br />
-  فقط <strong>به فیلم‌ها ستاره بده</strong> ⭐
-</p>
+          <p className="text-gray-300 text-lg md:text-xl leading-relaxed font-light">
+            <strong>با هم سلیقه‌ی فیلم‌ بازیت رو کشف می‌کنیم</strong> 🎬  
+            <br />
+            فقط <strong>چند دقیقه</strong> باهامون باش؛ 
+            <br /> 
+            بین هر دو فیلم <strong>✅ یکی رو انتخاب کن یا ردشون کن ❌</strong>                  
+            <br />
+            بعدش <strong>فیلم‌هایی بهت نشون می‌دیم که واقعاً بهت می‌چسبه</strong> 🔥  
+            <br />
+            چون هنوز کامل همو نمی‌شناسیم،  
+            ممکنه <strong>بعضی فیلم‌ها رو قبلاً دیده باشی</strong> اشکالی نداره 😉  
+            <br />
+            فقط <strong>به فیلم‌ها ستاره بده</strong> ⭐
+          </p>
           <Button onClick={handleStart} className="text-xl px-12 py-4 shadow-primary/50">
             شروع کنید (START)
           </Button>
@@ -478,7 +444,6 @@ const handleSaveRatings = async () => {
           <h2 className="text-3xl font-bold text-white">پیشنهادات ویژه برای شما</h2>
           <p className="text-gray-400">"بنظرم شما از دیدن این فیلمها لذت خواهید برد."</p>
           <h3 className="text-3xl font-bold text-white">«لطفا به پیشنهاد های ارائه شده ستاره دهید»</h3>
-
         </header>
 
         {loading ? (
@@ -487,171 +452,137 @@ const handleSaveRatings = async () => {
             <p className="text-gray-400">در حال یافتن بهترین فیلم‌ها...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {recommendations.map((movie, idx) => (
-              <div key={idx} className="bg-surface rounded-2xl p-4 flex flex-col space-y-3 shadow-xl">
-                <MovieCard movie={movie} disabled />
-                <div className="pt-2 text-right" dir="rtl">
-                  <p className="text-sm text-gray-300 italic mb-3 min-h-[3rem]">
-                    "{movie.reason || movie.description || 'این فیلم با سلیقه شما هماهنگی زیادی دارد.'}"
-                  </p>
-                  <div className="border-t border-gray-700 pt-3 flex flex-col items-center">
-                    <span className="text-xs text-gray-500 mb-1">به این پیشنهاد چه امتیازی می‌دهید؟</span>
-                    <StarRating 
-                      onRate={(rating) => handleRatingChange(movie.title, rating)}
-                      initialRating={movieRatings[movie.title] || 0}
-                    />
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              {recommendations.map((movie, idx) => (
+                <div key={idx} className="bg-surface rounded-2xl p-4 flex flex-col space-y-3 shadow-xl">
+                  <MovieCard movie={movie} disabled />
+                  <div className="pt-2 text-right" dir="rtl">
+                    <p className="text-sm text-gray-300 italic mb-3 min-h-[3rem]">
+                      "{movie.reason || movie.description || 'این فیلم با سلیقه شما هماهنگی زیادی دارد.'}"
+                    </p>
+                    <div className="border-t border-gray-700 pt-3 flex flex-col items-center">
+                      <span className="text-xs text-gray-500 mb-1">به این پیشنهاد چه امتیازی می‌دهید؟</span>
+                      <StarRating 
+                        onRate={(rating) => handleRatingChange(movie.title, rating)}
+                        initialRating={movieRatings[movie.title] || 0}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
 
-        {!loading && (
-          <div className="flex justify-center mb-12">
-            <Button onClick={() => setStep(AppStep.LEAD_GEN)} className="px-12">
-              ادامه
-            </Button>
-          </div>
+            {!loading && (
+              <div className="flex justify-center mb-12">
+                <Button 
+                  onClick={handleSaveRatings}
+                  className="px-12"
+                >
+                  ادامه
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
   }
 
-
-
-
-if (step === AppStep.LEAD_GEN) {
-  return (
-    
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-       {/* هدر چشمک زن */}
-      <div className="w-full max-w-md mb-6">
-        <div className="bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400/50 rounded-xl p-4 text-center animate-pulse shadow-lg">
-          <p className="text-white text-lg font-bold flex items-center justify-center gap-2">
-            <span className="text-2xl">⚠️</span>
-            لطفا کلید ثبت نظر را فشار دهید
-            <span className="text-2xl">⚠️</span>
+  if (step === AppStep.LEAD_GEN) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        {/* هدر چشمک زن */}
+        <div className="w-full max-w-md mb-6">
+          <div className="bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400/50 rounded-xl p-4 text-center animate-pulse shadow-lg">
+            <p className="text-white text-lg font-bold flex items-center justify-center gap-2">
+              <span className="text-2xl">⚠️</span>
+              لطفا کلید ثبت نظر را فشار دهید
+              <span className="text-2xl">⚠️</span>
+            </p>
+            <p className="text-yellow-200 text-sm mt-2">اطلاعات تماس اختیاری است</p>
+          </div>
+        </div>
+        
+        <div className="bg-surface p-8 rounded-3xl max-w-md w-full shadow-2xl border border-gray-700" dir="rtl">
+          <h3 className="text-2xl font-bold mb-2 text-center text-primary">عضویت در نسخه اولیه</h3>
+          <p className="text-gray-400 text-center mb-6 text-sm leading-6">
+            در صورت تمایل ایمیل یا شماره تلفن خود را وارد کنید. (اختیاری)
           </p>
-          <p className="text-yellow-200 text-sm mt-2">اطلاعات تماس اختیاری است</p>
+          
+          <form onSubmit={handleLeadGenSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase text-right">ایمیل (اختیاری)</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full bg-background border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none text-left"
+                placeholder="you@example.com (اختیاری)"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase text-right">شماره موبایل (اختیاری)</label>
+              <input 
+                type="tel" 
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full bg-background border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none text-left"
+                placeholder="0912... (اختیاری)"
+                dir="ltr"
+              />
+            </div>
+            <div className="mt-6">
+              <Button 
+                type="submit"
+                fullWidth 
+                className="bg-primary hover:bg-primary/90 py-3"
+              >
+                ثبت نظر و اطلاعات
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
-      <div className="bg-surface p-8 rounded-3xl max-w-md w-full shadow-2xl border border-gray-700" dir="rtl">
-        <h3 className="text-2xl font-bold mb-2 text-center text-primary">عضویت در نسخه اولیه</h3>
-        <p className="text-gray-400 text-center mb-6 text-sm leading-6">
-          در صورت تمایل ایمیل یا شماره تلفن خود را وارد کنید. (اختیاری)
-        </p>
-        
+    );
+  }
+
+  // Thank you step
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="text-center space-y-8 max-w-md">
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase text-right">ایمیل (اختیاری)</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full bg-background border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none text-left"
-              placeholder="you@example.com (اختیاری)"
-              dir="ltr"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase text-right">شماره موبایل (اختیاری)</label>
-            <input 
-              type="tel" 
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              className="w-full bg-background border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none text-left"
-              placeholder="0912... (اختیاری)"
-              dir="ltr"
-            />
-          </div>
-          <div className="mt-6">
-            <Button 
-              fullWidth 
-              className="bg-primary hover:bg-primary/90 py-3"
-              onClick={() => {
-                // تنظیم مقادیر پیش‌فرض اگر خالی باشند
-                const finalEmail = email.trim() || 'no@name.id';
-                const finalPhone = phone.trim() || '0000000';
-                
-                // ساخت داده‌های نهایی
-                const finalPayload = {
-                  email: finalEmail,
-                  phone: finalPhone,
-                  selected_movies: selectedMovies,
-                  movie_ratings: movieRatings,
-                  timestamp: new Date().toISOString()
-                };
-                
-                console.log("Submitting data:", finalPayload);
-                
-                // ارسال به سرور
-                fetch(`${API_BASE}/api/submit/`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify(finalPayload),
-                })
-                .then(response => response.json())
-                .then(data => {
-                  console.log("Submission successful:", data);
-                  setStep(AppStep.THANK_YOU);
-                })
-                .catch(err => {
-                  console.error("Submission error:", err);
-                  // حتی اگر خطا هم داد، به صفحه تشکر برو
-                  setStep(AppStep.THANK_YOU);
-                });
-              }}
-            >
-              ثبت نظر و اطلاعات
-            </Button>
-          </div>
+          <h1 className="text-6xl">🎉</h1>
+          <h2 className="text-3xl font-bold text-white">ممنون از همراهی شما!</h2>
+          <p className="text-gray-400 text-lg">بازخورد شما با موفقیت ثبت شد.</p>
+        </div>
+        
+        <div className="pt-6">
+          <Button 
+            onClick={() => {
+              // ریست کردن همه stateها به حالت اولیه
+              setStep(AppStep.INTRO);
+              setSelectedMovies([]);
+              setCurrentPair([]);
+              setRecommendations([]);
+              setRejectedMovies(new Set());
+              setRejectedPairs(new Set());
+              setPhase1FirstDone(false);
+              setPhase1GenreDone(false);
+              setSmartPhaseCount(0);
+              setEmail('');
+              setPhone('');
+              setMovieRatings({});
+            }}
+            className="px-8 py-3 text-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+          >
+            شروع مجدد
+          </Button>
         </div>
       </div>
     </div>
   );
-}
-
-
-  // Thank you step
-// Thank you step
-return (
-  <div className="min-h-screen flex items-center justify-center p-6">
-    <div className="text-center space-y-8 max-w-md">
-      <div className="space-y-4">
-        <h1 className="text-6xl">🎉</h1>
-        <h2 className="text-3xl font-bold text-white">ممنون از همراهی شما!</h2>
-        <p className="text-gray-400 text-lg">بازخورد شما با موفقیت ثبت شد.</p>
-      </div>
-      
-      <div className="pt-6">
-        <Button 
-          onClick={() => {
-            // ریست کردن همه stateها به حالت اولیه
-            setStep(AppStep.INTRO);
-            setSelectedMovies([]);
-            setCurrentPair([]);
-            setRecommendations([]);
-            setRejectedMovies(new Set());
-            setRejectedPairs(new Set());
-            setPhase1FirstDone(false);
-            setPhase1GenreDone(false);
-            setSmartPhaseCount(0);
-            setEmail('');
-            setPhone('');
-            setMovieRatings({});
-          }}
-          className="px-8 py-3 text-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-        >
-          شروع مجدد
-        </Button>
-      </div>
-    </div>
-  </div>
-);
 };
 
 export default App;
