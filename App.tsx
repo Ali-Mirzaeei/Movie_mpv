@@ -7,9 +7,13 @@ import Button from './components/Button';
 import MovieCard from './components/MovieCard';
 import StarRating from './components/StarRating';
 import { submitVote } from "./api";
-import { API_BASE } from "./config";
+await submitVote(payload);
 
 const TOTAL_SELECTIONS_NEEDED = 10;
+
+
+console.log(import.meta.env.VITE_API_BASE_URL)
+
 
 const App: React.FC = () => {
   // State اصلی
