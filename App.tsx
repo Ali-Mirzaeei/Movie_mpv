@@ -6,13 +6,14 @@ import { generateSmartMoviePair, generateFinalRecommendations as generateAIRecom
 import Button from './components/Button';
 import MovieCard from './components/MovieCard';
 import StarRating from './components/StarRating';
-import { submitVote } from "./api";
+// بعد از خطوط import و قبل از const App: React.FC
+const API_BASE = "https://movie-mind-ol9e.onrender.com";
 
+console.log("Backend URL:", API_BASE); // برای دیباگ
 
 const TOTAL_SELECTIONS_NEEDED = 10;
 
 
-console.log("ENV TEST:", import.meta.env.VITE_API_BASE_URL);
 
 
 const App: React.FC = () => {
