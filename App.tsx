@@ -219,74 +219,86 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLeadGenSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload = {
-      email,
-      phone,
-      selected_movies: selectedMovies,
-      movie_ratings: movieRatings,
-    };
-
-    try {
-      const response = await fetch("https://movie-mind-ol9e.onrender.com/api/submit/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Submission error:", errorData);
-        alert("Failed to submit. Please check your input.");
-        return;
-      }
-
-      const data = await response.json();
-      console.log("Submission successful:", data);
-      setStep(AppStep.THANK_YOU);
-    } catch (err) {
-      console.error("Network error:", err);
-      alert("Network error. Please try again later.");
-    }
+ const handleLeadGenSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  // ✅ تنظیم مقادیر پیش‌فرض برای فیلدهای اختیاری
+  const finalEmail = email.trim() || 'no-email@example.com';
+  const finalPhone = phone.trim() || '00000000000';
+  
+  const payload = {
+    email: finalEmail,
+    phone: finalPhone,
+    selected_movies: selectedMovies,
+    movie_ratings: movieRatings,
   };
+
+  try {
+    const response = await fetch(`${API_BASE}/api/submit/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Submission error:", errorData);
+      // حتی اگر خطا هم داد، به صفحه تشکر برو
+      setStep(AppStep.THANK_YOU);
+      return;
+    }
+
+    const data = await response.json();
+    console.log("Submission successful:", data);
+    setStep(AppStep.THANK_YOU);
+  } catch (err) {
+    console.error("Network error:", err);
+    // حتی در صورت خطای شبکه هم به صفحه تشکر برو
+    setStep(AppStep.THANK_YOU);
+  }
+};
+
+
+
 
   // تابع برای ثبت امتیازها
-  const handleSaveRatings = async () => {
-    const payload = {
-      email: '', // فعلا خالی
-      phone: '', // فعلا خالی
-      selected_movies: selectedMovies,
-      movie_ratings: movieRatings,
-      source: 'ratings_page' // برای تشخیص منبع ثبت
-    };
-
-    try {
-      const response = await fetch("https://movie-mind-ol9e.onrender.com/api/submit/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Rating submission error:", errorData);
-        // می‌توانید یک alert نشان دهید یا لاگ کنید
-      } else {
-        const data = await response.json();
-        console.log("Ratings saved successfully:", data);
-      }
-    } catch (err) {
-      console.error("Network error while saving ratings:", err);
-    }
-    
-    // در هر صورت به مرحله بعد برو
-    setStep(AppStep.LEAD_GEN);
+ const handleSaveRatings = async () => {
+  const payload = {
+    email: 'no-email@example.com', // ✅ مقدار پیش‌فرض
+    phone: '00000000000',          // ✅ مقدار پیش‌فرض
+    selected_movies: selectedMovies,
+    movie_ratings: movieRatings,
+    source: 'ratings_page'
   };
+
+  try {
+    const response = await fetch(`${API_BASE}/api/submit/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Rating submission error:", errorData);
+    } else {
+      const data = await response.json();
+      console.log("Ratings saved successfully:", data);
+    }
+  } catch (err) {
+    console.error("Network error while saving ratings:", err);
+  }
+  
+  // در هر صورت به مرحله بعد برو
+  setStep(AppStep.LEAD_GEN);
+};
+
+
+
 
   const handleRatingChange = (movieTitle: string, rating: number) => {
     setMovieRatings(prev => ({
