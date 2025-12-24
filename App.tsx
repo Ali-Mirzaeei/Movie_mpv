@@ -6,19 +6,11 @@ import { generateSmartMoviePair, generateFinalRecommendations as generateAIRecom
 import Button from './components/Button';
 import MovieCard from './components/MovieCard';
 import StarRating from './components/StarRating';
-// بعد از خطوط import و قبل از const App: React.FC
-const API_BASE = "https://movie-mind-ol9e.onrender.com";
 
-console.log("Backend URL:", API_BASE); // برای دیباگ
+const API_BASE = "https://movie-mind-ol9e.onrender.com";
+console.log("Backend URL:", API_BASE);
 
 const TOTAL_SELECTIONS_NEEDED = 10;
-
-
-// در بخش stateها اضافه کنید (بعد از سایر stateها)
-const [ratingError, setRatingError] = useState(false);
-const [showRatingNotification, setShowRatingNotification] = useState(false);
-
-
 
 const App: React.FC = () => {
   // State اصلی
@@ -42,6 +34,10 @@ const App: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [movieRatings, setMovieRatings] = useState<{[key: string]: number}>({});
 
+  // Stateهای جدید برای اعتبارسنجی امتیاز
+  const [ratingError, setRatingError] = useState(false);
+  const [showRatingNotification, setShowRatingNotification] = useState(false);
+
   // --- Helper Functions ---
   const markPairAsRejected = useCallback((pair: Movie[]) => {
     const pairKey = pair.map(m => m.id).sort().join('-');
@@ -57,7 +53,6 @@ const App: React.FC = () => {
   const getNonRepeatingPair = useCallback((excludeIds: string[] = []): Movie[] => {
     const pair = getRandomPair(excludeIds);
     
-    // Check if pair is rejected
     const pairKey = pair.map(m => m.id).sort().join('-');
     if (rejectedPairs.has(pairKey) || pair.some(m => rejectedMovies.has(m.id!))) {
       return getNonRepeatingPair([...excludeIds, ...pair.map(m => m.id!)]);
@@ -83,18 +78,15 @@ const App: React.FC = () => {
     const newHistory = [...selectedMovies, movie];
     setSelectedMovies(newHistory);
     
-    // رد کردن فیلم دیگر در جفت
     const otherMovie = currentPair.find(m => m.title !== movie.title);
     if (otherMovie) {
       markPairAsRejected([otherMovie]);
     }
 
     if (!phase1FirstDone) {
-      // اولین انتخاب انجام شد
       setPhase1FirstDone(true);
       setStep(AppStep.PHASE_1_BY_GENRE);
       
-      // نمایش فیلم‌های هم‌ژانر
       const genre = getMovieGenre(movie.title);
       const genreMovies = getMoviesByGenre(genre, [movie.id!, ...Array.from(rejectedMovies)]);
       
@@ -107,11 +99,9 @@ const App: React.FC = () => {
     }
     
     if (!phase1GenreDone && phase1FirstDone) {
-      // انتخاب دوم (بر اساس ژانر) انجام شد
       setPhase1GenreDone(true);
       setSmartPhaseCount(1);
       
-      // شروع مرحله هوشمند
       const taste = analyzeUserTaste(newHistory);
       const smartPair = getSmartPair(
         taste, 
@@ -124,12 +114,10 @@ const App: React.FC = () => {
       return;
     }
     
-    // مراحل هوشمند
     if (smartPhaseCount < 8) {
       const nextCount = smartPhaseCount + 1;
       setSmartPhaseCount(nextCount);
       
-      // اگر شماره مرحله فرد است و AI در دسترس است
       if (nextCount % 2 === 1 && isAIAvailable()) {
         setLoading(true);
         try {
@@ -144,7 +132,6 @@ const App: React.FC = () => {
             const enriched = getEnrichedMovies(aiPair);
             setCurrentPair(enriched);
           } else {
-            // اگر AI جواب نداد یا خطا داد، از منطق محلی استفاده کن
             const localPair = getSmartPair(
               taste, 
               newHistory, 
@@ -155,7 +142,6 @@ const App: React.FC = () => {
           }
         } catch (error) {
           console.error('AI failed:', error);
-          // Fallback به منطق محلی در صورت خطا
           const taste = analyzeUserTaste(newHistory);
           const localPair = getSmartPair(
             taste, 
@@ -168,7 +154,6 @@ const App: React.FC = () => {
           setLoading(false);
         }
       } else {
-        // اگر مرحله زوج است یا AI در دسترس نیست، از منطق محلی استفاده کن
         const taste = analyzeUserTaste(newHistory);
         const smartPair = getSmartPair(
           taste, 
@@ -179,7 +164,6 @@ const App: React.FC = () => {
         setCurrentPair(smartPair);
       }
     } else {
-      // ۱۰ انتخاب کامل شد
       setStep(AppStep.RESULTS);
     }
   };
@@ -188,13 +172,11 @@ const App: React.FC = () => {
     markPairAsRejected(currentPair);
     
     if (step === AppStep.PHASE_1_FIRST_RANDOM) {
-      // نمایش جفت تصادفی دیگر
       setCurrentPair(getNonRepeatingPair([
         ...selectedMovies.map(m => m.id!),
         ...Array.from(rejectedMovies)
       ]));
     } else if (step === AppStep.PHASE_1_BY_GENRE) {
-      // نمایش جفت هم‌ژانر دیگر
       const lastSelected = selectedMovies[selectedMovies.length - 1];
       const genre = getMovieGenre(lastSelected.title);
       const genreMovies = getMoviesByGenre(genre, [
@@ -211,7 +193,6 @@ const App: React.FC = () => {
         ]));
       }
     } else {
-      // مرحله هوشمند - نمایش جفت جدید
       const taste = analyzeUserTaste(selectedMovies);
       const smartPair = getSmartPair(
         taste, 
@@ -223,88 +204,74 @@ const App: React.FC = () => {
     }
   };
 
- const handleLeadGenSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  // ✅ تنظیم مقادیر پیش‌فرض برای فیلدهای اختیاری
-  const finalEmail = email.trim() || 'no-email@example.com';
-  const finalPhone = phone.trim() || '00000000000';
-  
-  const payload = {
-    email: finalEmail,
-    phone: finalPhone,
-    selected_movies: selectedMovies,
-    movie_ratings: movieRatings,
+  const handleLeadGenSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const finalEmail = email.trim() || 'no-email@example.com';
+    const finalPhone = phone.trim() || '00000000000';
+    
+    const payload = {
+      email: finalEmail,
+      phone: finalPhone,
+      selected_movies: selectedMovies,
+      movie_ratings: movieRatings,
+    };
+
+    try {
+      const response = await fetch(`${API_BASE}/api/submit/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Submission error:", errorData);
+        setStep(AppStep.THANK_YOU);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Submission successful:", data);
+      setStep(AppStep.THANK_YOU);
+    } catch (err) {
+      console.error("Network error:", err);
+      setStep(AppStep.THANK_YOU);
+    }
   };
 
-  try {
-    const response = await fetch(`${API_BASE}/api/submit/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Submission error:", errorData);
-      // حتی اگر خطا هم داد، به صفحه تشکر برو
-      setStep(AppStep.THANK_YOU);
+  const handleSaveRatings = async () => {
+    const hasAnyRating = Object.keys(movieRatings).length > 0;
+    
+    if (!hasAnyRating) {
+      setRatingError(true);
+      setShowRatingNotification(true);
+      
+      setTimeout(() => {
+        setShowRatingNotification(false);
+      }, 5000);
+      
       return;
     }
-
-    const data = await response.json();
-    console.log("Submission successful:", data);
-    setStep(AppStep.THANK_YOU);
-  } catch (err) {
-    console.error("Network error:", err);
-    // حتی در صورت خطای شبکه هم به صفحه تشکر برو
-    setStep(AppStep.THANK_YOU);
-  }
-};
-
-
-
-
-  // تابع برای ثبت امتیازها
- const handleSaveRatings = async () => {
-  // بررسی اینکه آیا حداقل یک فیلم امتیاز خورده است
-  const hasAnyRating = Object.keys(movieRatings).length > 0;
-  
-  if (!hasAnyRating) {
-    // نمایش خطا
-    setRatingError(true);
-    setShowRatingNotification(true);
     
-    // مخفی کردن نوتیفیکیشن بعد از 5 ثانیه
-    setTimeout(() => {
-      setShowRatingNotification(false);
-    }, 5000);
-    
-    return; // توقف فرآیند
-  }
-  
-  // اگر امتیازی داده شده بود
-  setRatingError(false);
-  setShowRatingNotification(false);
-  setStep(AppStep.LEAD_GEN);
-};
-
-const handleRatingChange = (movieTitle: string, rating: number) => {
-  setMovieRatings(prev => ({
-    ...prev,
-    [movieTitle]: rating
-  }));
-  
-  // اگر کاربر شروع به امتیاز دادن کرد، خطا را پاک کن
-  if (rating > 0) {
     setRatingError(false);
     setShowRatingNotification(false);
-  }
-};
+    setStep(AppStep.LEAD_GEN);
+  };
 
-
+  const handleRatingChange = (movieTitle: string, rating: number) => {
+    setMovieRatings(prev => ({
+      ...prev,
+      [movieTitle]: rating
+    }));
+    
+    if (rating > 0) {
+      setRatingError(false);
+      setShowRatingNotification(false);
+    }
+  };
 
   // --- Effects ---
   useEffect(() => {
@@ -318,14 +285,12 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
       const fetchRecommendations = async () => {
         setLoading(true);
         
-        // ابتدا از منطق محلی استفاده می‌کنیم
         const taste = analyzeUserTaste(selectedMovies);
         const localRecs = getFinalRecommendations(taste, selectedMovies.map(m => m.id!));
         
         console.log('AI available?', isAIAvailable());
         console.log('Local recommendations count:', localRecs.length);
         
-        // اگر OpenAI API داریم، از آن استفاده می‌کنیم
         if (isAIAvailable()) {
           try {
             const aiRecs = await generateAIRecommendations(selectedMovies.map(m => m.title));
@@ -352,7 +317,6 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
     }
   }, [step, recommendations.length, selectedMovies, getEnrichedMovies]);
 
-  // --- Render Progress Indicator ---
   const renderProgressIndicator = () => {
     if (step === AppStep.INTRO || step === AppStep.RESULTS || 
         step === AppStep.LEAD_GEN || step === AppStep.THANK_YOU) {
@@ -382,7 +346,6 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
     );
   };
 
-  // --- Render Steps ---
   if (step === AppStep.INTRO) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-[url('https://picsum.photos/id/234/1920/1080?grayscale&blur=2')] bg-cover bg-center">
@@ -453,31 +416,27 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
     );
   }
 
- if (step === AppStep.RESULTS) {
-  return (
-    <div className="min-h-screen p-4 max-w-5xl mx-auto">
-      <header className="py-8 text-center space-y-2" dir="rtl">
-        <h2 className="text-3xl font-bold text-white">پیشنهادات ویژه برای شما</h2>
-        <p className="text-gray-400">"بنظرم شما از دیدن این فیلمها لذت خواهید برد."</p>
-        <h3 className="text-3xl font-bold text-white">«لطفا به پیشنهاد های ارائه شده ستاره دهید»</h3>
-      </header>
+  if (step === AppStep.RESULTS) {
+    return (
+      <div className="min-h-screen p-4 max-w-5xl mx-auto">
+        <header className="py-8 text-center space-y-2" dir="rtl">
+          <h2 className="text-3xl font-bold text-white">پیشنهادات ویژه برای شما</h2>
+          <p className="text-gray-400">"بنظرم شما از دیدن این فیلمها لذت خواهید برد."</p>
+          <h3 className="text-3xl font-bold text-white">«لطفا به پیشنهاد های ارائه شده ستاره دهید»</h3>
+        </header>
 
-      {/* 🔴 نوتیفیکیشن خطا */}
-      {showRatingNotification && (
-        <div className="mb-6 animate-pulse">
-          <div className="bg-red-900/30 border-2 border-red-500 rounded-xl p-4 text-center">
-            <p className="text-white text-lg font-bold flex items-center justify-center gap-2">
-              <span className="text-2xl">⚠️</span>
-              لطفا ابتدا به یکی از فیلم‌های زیر که قبلا دیده‌اید امتیاز دهید
-              <span className="text-2xl">⚠️</span>
-            </p>
-            <p className="text-red-200 text-sm mt-2">برای ادامه باید حداقل به یک فیلم ستاره بدهید</p>
+        {showRatingNotification && (
+          <div className="mb-6 animate-pulse">
+            <div className="bg-red-900/30 border-2 border-red-500 rounded-xl p-4 text-center">
+              <p className="text-white text-lg font-bold flex items-center justify-center gap-2">
+                <span className="text-2xl">⚠️</span>
+                لطفا ابتدا به یکی از فیلم‌های زیر که قبلا دیده‌اید امتیاز دهید
+                <span className="text-2xl">⚠️</span>
+              </p>
+              <p className="text-red-200 text-sm mt-2">برای ادامه باید حداقل به یک فیلم ستاره بدهید</p>
+            </div>
           </div>
-        </div>
-      )}
-
-      
-        // ... بقیه کد بدون تغییر
+        )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -506,27 +465,25 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
               ))}
             </div>
 
-           {!loading && (
-  <div className="flex flex-col items-center gap-4 mb-12">
-    {/* نمایش وضعیت امتیازدهی */}
-    <div className="text-center">
-      <p className={`text-sm ${ratingError ? 'text-red-400' : 'text-green-400'}`}>
-        {Object.keys(movieRatings).length > 0 
-          ? `✅ به ${Object.keys(movieRatings).length} فیلم امتیاز داده‌اید`
-          : '⭕ هنوز به هیچ فیلمی امتیاز نداده‌اید'}
-      </p>
-    </div>
-    
-    <Button 
-      onClick={handleSaveRatings}
-      className={`px-12 ${ratingError ? 'bg-red-600 hover:bg-red-700' : ''}`}
-      disabled={loading}
-    >
-      {ratingError ? 'لطفا اول امتیاز دهید' : 'ادامه'}
-    </Button>
-  </div>
-)}
-
+            {!loading && (
+              <div className="flex flex-col items-center gap-4 mb-12">
+                <div className="text-center">
+                  <p className={`text-sm ${ratingError ? 'text-red-400' : 'text-green-400'}`}>
+                    {Object.keys(movieRatings).length > 0 
+                      ? `✅ به ${Object.keys(movieRatings).length} فیلم امتیاز داده‌اید`
+                      : '⭕ هنوز به هیچ فیلمی امتیاز نداده‌اید'}
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={handleSaveRatings}
+                  className={`px-12 ${ratingError ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                  disabled={loading}
+                >
+                  {ratingError ? 'لطفا اول امتیاز دهید' : 'ادامه'}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -536,7 +493,6 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
   if (step === AppStep.LEAD_GEN) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        {/* هدر چشمک زن */}
         <div className="w-full max-w-md mb-6">
           <div className="bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400/50 rounded-xl p-4 text-center animate-pulse shadow-lg">
             <p className="text-white text-lg font-bold flex items-center justify-center gap-2">
@@ -592,7 +548,6 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
     );
   }
 
-  // Thank you step
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="text-center space-y-8 max-w-md">
@@ -605,7 +560,6 @@ const handleRatingChange = (movieTitle: string, rating: number) => {
         <div className="pt-6">
           <Button 
             onClick={() => {
-              // ریست کردن همه stateها به حالت اولیه
               setStep(AppStep.INTRO);
               setSelectedMovies([]);
               setCurrentPair([]);
