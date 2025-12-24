@@ -84,6 +84,25 @@ USE_I18N = True
 USE_TZ = True
 
 # ------------------------------
+# 📦 Templates
+# ------------------------------
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],  # اگر دایرکتوری custom templates داری، اینجا اضافه کن
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+# ------------------------------
 # 📁 Static files (production)
 # ------------------------------
 STATIC_URL = "/static/"
