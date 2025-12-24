@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",
-    "submissions",
+    "submissions.apps.SubmissionsConfig",
     "corsheaders",   # اگر CORS لازمه
 ]
 
