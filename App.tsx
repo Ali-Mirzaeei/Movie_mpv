@@ -263,7 +263,7 @@ const App: React.FC = () => {
     };
 
     try {
-      const response = await fetch("https://movie-mind-ol9e.onrender.com/api/submissions/" {
+      const response = await fetch("https://movie-mind-ol9e.onrender.com/api/submissions/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
