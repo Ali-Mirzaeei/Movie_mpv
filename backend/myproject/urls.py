@@ -17,8 +17,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from .views import submit_view
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('submissions.urls')),
+    path("submit/", submit_view, name="submit"),
+
 ]
