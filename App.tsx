@@ -12,7 +12,7 @@ await submitVote(payload);
 const TOTAL_SELECTIONS_NEEDED = 10;
 
 
-console.log(import.meta.env.VITE_API_BASE_URL)
+console.log("ENV TEST:", import.meta.env.VITE_API_BASE_URL);
 
 
 const App: React.FC = () => {
