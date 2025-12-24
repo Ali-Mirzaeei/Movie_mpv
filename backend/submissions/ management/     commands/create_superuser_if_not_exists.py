@@ -25,3 +25,4 @@ class Command(BaseCommand):
             self.stdout.write("Superuser created")
         else:
             self.stdout.write("Superuser already exists")
+#
