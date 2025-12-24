@@ -14,6 +14,10 @@ console.log("Backend URL:", API_BASE); // برای دیباگ
 const TOTAL_SELECTIONS_NEEDED = 10;
 
 
+// در بخش stateها اضافه کنید (بعد از سایر stateها)
+const [ratingError, setRatingError] = useState(false);
+const [showRatingNotification, setShowRatingNotification] = useState(false);
+
 
 
 const App: React.FC = () => {
@@ -265,47 +269,42 @@ const App: React.FC = () => {
 
   // تابع برای ثبت امتیازها
  const handleSaveRatings = async () => {
-  const payload = {
-    email: 'no-email@example.com', // ✅ مقدار پیش‌فرض
-    phone: '00000000000',          // ✅ مقدار پیش‌فرض
-    selected_movies: selectedMovies,
-    movie_ratings: movieRatings,
-    source: 'ratings_page'
-  };
-
-  try {
-    const response = await fetch(`${API_BASE}/api/submit/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Rating submission error:", errorData);
-    } else {
-      const data = await response.json();
-      console.log("Ratings saved successfully:", data);
-    }
-  } catch (err) {
-    console.error("Network error while saving ratings:", err);
+  // بررسی اینکه آیا حداقل یک فیلم امتیاز خورده است
+  const hasAnyRating = Object.keys(movieRatings).length > 0;
+  
+  if (!hasAnyRating) {
+    // نمایش خطا
+    setRatingError(true);
+    setShowRatingNotification(true);
+    
+    // مخفی کردن نوتیفیکیشن بعد از 5 ثانیه
+    setTimeout(() => {
+      setShowRatingNotification(false);
+    }, 5000);
+    
+    return; // توقف فرآیند
   }
   
-  // در هر صورت به مرحله بعد برو
+  // اگر امتیازی داده شده بود
+  setRatingError(false);
+  setShowRatingNotification(false);
   setStep(AppStep.LEAD_GEN);
 };
 
+const handleRatingChange = (movieTitle: string, rating: number) => {
+  setMovieRatings(prev => ({
+    ...prev,
+    [movieTitle]: rating
+  }));
+  
+  // اگر کاربر شروع به امتیاز دادن کرد، خطا را پاک کن
+  if (rating > 0) {
+    setRatingError(false);
+    setShowRatingNotification(false);
+  }
+};
 
 
-
-  const handleRatingChange = (movieTitle: string, rating: number) => {
-    setMovieRatings(prev => ({
-      ...prev,
-      [movieTitle]: rating
-    }));
-  };
 
   // --- Effects ---
   useEffect(() => {
@@ -454,14 +453,31 @@ const App: React.FC = () => {
     );
   }
 
-  if (step === AppStep.RESULTS) {
-    return (
-      <div className="min-h-screen p-4 max-w-5xl mx-auto">
-        <header className="py-8 text-center space-y-2" dir="rtl">
-          <h2 className="text-3xl font-bold text-white">پیشنهادات ویژه برای شما</h2>
-          <p className="text-gray-400">"بنظرم شما از دیدن این فیلمها لذت خواهید برد."</p>
-          <h3 className="text-3xl font-bold text-white">«لطفا به پیشنهاد های ارائه شده ستاره دهید»</h3>
-        </header>
+ if (step === AppStep.RESULTS) {
+  return (
+    <div className="min-h-screen p-4 max-w-5xl mx-auto">
+      <header className="py-8 text-center space-y-2" dir="rtl">
+        <h2 className="text-3xl font-bold text-white">پیشنهادات ویژه برای شما</h2>
+        <p className="text-gray-400">"بنظرم شما از دیدن این فیلمها لذت خواهید برد."</p>
+        <h3 className="text-3xl font-bold text-white">«لطفا به پیشنهاد های ارائه شده ستاره دهید»</h3>
+      </header>
+
+      {/* 🔴 نوتیفیکیشن خطا */}
+      {showRatingNotification && (
+        <div className="mb-6 animate-pulse">
+          <div className="bg-red-900/30 border-2 border-red-500 rounded-xl p-4 text-center">
+            <p className="text-white text-lg font-bold flex items-center justify-center gap-2">
+              <span className="text-2xl">⚠️</span>
+              لطفا ابتدا به یکی از فیلم‌های زیر که قبلا دیده‌اید امتیاز دهید
+              <span className="text-2xl">⚠️</span>
+            </p>
+            <p className="text-red-200 text-sm mt-2">برای ادامه باید حداقل به یک فیلم ستاره بدهید</p>
+          </div>
+        </div>
+      )}
+
+      
+        // ... بقیه کد بدون تغییر
 
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -490,16 +506,27 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {!loading && (
-              <div className="flex justify-center mb-12">
-                <Button 
-                  onClick={handleSaveRatings}
-                  className="px-12"
-                >
-                  ادامه
-                </Button>
-              </div>
-            )}
+           {!loading && (
+  <div className="flex flex-col items-center gap-4 mb-12">
+    {/* نمایش وضعیت امتیازدهی */}
+    <div className="text-center">
+      <p className={`text-sm ${ratingError ? 'text-red-400' : 'text-green-400'}`}>
+        {Object.keys(movieRatings).length > 0 
+          ? `✅ به ${Object.keys(movieRatings).length} فیلم امتیاز داده‌اید`
+          : '⭕ هنوز به هیچ فیلمی امتیاز نداده‌اید'}
+      </p>
+    </div>
+    
+    <Button 
+      onClick={handleSaveRatings}
+      className={`px-12 ${ratingError ? 'bg-red-600 hover:bg-red-700' : ''}`}
+      disabled={loading}
+    >
+      {ratingError ? 'لطفا اول امتیاز دهید' : 'ادامه'}
+    </Button>
+  </div>
+)}
+
           </>
         )}
       </div>
