@@ -7,7 +7,7 @@ import Button from './components/Button';
 import MovieCard from './components/MovieCard';
 import StarRating from './components/StarRating';
 import { submitVote } from "./api";
-await submitVote(payload);
+
 
 const TOTAL_SELECTIONS_NEEDED = 10;
 
