@@ -6,6 +6,17 @@ import { generateSmartMoviePair, generateFinalRecommendations as generateAIRecom
 import Button from './components/Button';
 import MovieCard from './components/MovieCard';
 import StarRating from './components/StarRating';
+import { submitVote } from "./api";
+
+export const submitVote = (payload: any) => {
+  return fetch(`${API_BASE}/api/submit/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+};
 
 const TOTAL_SELECTIONS_NEEDED = 10;
 
@@ -224,14 +235,16 @@ const handleLeadGenSubmit = async (e: React.FormEvent) => {
       movie_ratings: movieRatings,
     };
 
-    try {
-      const response = await fetch("http://localhost:8000/api/submit/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+  import { API_BASE } from "./config";
+
+try {
+  const response = await fetch(`${API_BASE}/api/submit/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -263,13 +276,14 @@ const handleSaveRatings = async () => {
   };
 
   try {
-    const response = await fetch("http://localhost:8000/api/submit/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+  const response = await fetch(`${API_BASE}/api/submit/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -573,7 +587,7 @@ if (step === AppStep.LEAD_GEN) {
                 console.log("Submitting data:", finalPayload);
                 
                 // ارسال به سرور
-                fetch("http://localhost:8000/api/submit/", {
+                fetch(`${API_BASE}/api/submit/`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
